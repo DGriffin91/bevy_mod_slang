@@ -14,8 +14,8 @@ SamplerState texture_sampler;
 // Structure for post-processing settings
 struct PostProcessSettings
 {
-    float3 padding;
     float intensity;
+    float3 padding;
 };
 
 // Uniform buffer for settings

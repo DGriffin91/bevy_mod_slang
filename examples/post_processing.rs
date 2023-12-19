@@ -182,7 +182,7 @@ impl FromWorld for PostProcessPipeline {
 
         let sampler = render_device.create_sampler(&SamplerDescriptor::default());
 
-        // The HLSL Registry Holds HLSL shader handles so the file watcher will watch for updates and cause a new spv file to be generated when changes are made.
+        // The Slang Registry Holds Slang shader handles so the file watcher will watch for updates and cause a new spv file to be generated when changes are made.
         let shader =
             SlangRegistry::load_from_world("shaders/post_processing.slang", world, "ps_6_0");
 
@@ -222,8 +222,8 @@ impl FromWorld for PostProcessPipeline {
 
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 struct PostProcessSettings {
-    padding: Vec3,
     intensity: f32,
+    padding: Vec3,
 }
 
 fn setup(

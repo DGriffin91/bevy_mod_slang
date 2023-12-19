@@ -100,7 +100,8 @@ impl AssetLoader for SlangLoader {
             .arg("-profile")
             .arg(&settings.profile)
             .arg("-o")
-            .arg(path.with_extension("spv"));
+            .arg(path.with_extension("spv"))
+            .arg("-fvk-use-gl-layout");
         if settings.profile.contains("ps_") {
             cmd.arg("-entry").arg("fragment");
             cmd.arg("-fvk-use-entrypoint-name");
