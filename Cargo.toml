@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.12.1", features = ["shader_format_spirv"] }
+bevy = { version = "0.13", features = ["shader_format_spirv"] }
 serde = "1.0.193"
 spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "83f8c72f04a6af673b0533a0f03527b7756f883e", optional = true }
 

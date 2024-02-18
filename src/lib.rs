@@ -73,7 +73,7 @@ impl SlangRegistry {
 }
 
 #[derive(Asset, TypePath, Debug)]
-pub struct SlangShader(PathBuf);
+pub struct SlangShader(pub PathBuf);
 
 #[derive(Default)]
 struct SlangLoader;

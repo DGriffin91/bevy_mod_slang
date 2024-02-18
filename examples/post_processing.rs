@@ -1,6 +1,6 @@
 use bevy::{
     core_pipeline::{
-        clear_color::ClearColorConfig, core_3d,
+        core_3d::graph::{Core3d, Node3d},
         fullscreen_vertex_shader::fullscreen_shader_vertex_state,
     },
     ecs::query::QueryItem,
@@ -10,12 +10,12 @@ use bevy::{
             ComponentUniforms, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin,
         },
         render_graph::{
-            NodeRunError, RenderGraphApp, RenderGraphContext, ViewNode, ViewNodeRunner,
+            NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
         },
         render_resource::{
-            BindGroupEntries, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
-            BindingType, CachedRenderPipelineId, ColorTargetState, ColorWrites, FragmentState,
-            MultisampleState, Operations, PipelineCache, PrimitiveState, RenderPassColorAttachment,
+            BindGroupEntries, BindGroupLayout, BindGroupLayoutEntry, BindingType,
+            CachedRenderPipelineId, ColorTargetState, ColorWrites, FragmentState, MultisampleState,
+            Operations, PipelineCache, PrimitiveState, RenderPassColorAttachment,
             RenderPassDescriptor, RenderPipelineDescriptor, Sampler, SamplerBindingType,
             SamplerDescriptor, ShaderStages, ShaderType, TextureFormat, TextureSampleType,
             TextureViewDimension,
@@ -54,17 +54,14 @@ impl Plugin for PostProcessPlugin {
         };
 
         render_app
-            .add_render_graph_node::<ViewNodeRunner<PostProcessNode>>(
-                core_3d::graph::NAME,
-                PostProcessNode::NAME,
-            )
+            .add_render_graph_node::<ViewNodeRunner<PostProcessNode>>(Core3d, PostProcessLabel)
             .add_render_graph_edges(
-                core_3d::graph::NAME,
-                &[
-                    core_3d::graph::node::TONEMAPPING,
-                    PostProcessNode::NAME,
-                    core_3d::graph::node::END_MAIN_PASS_POST_PROCESSING,
-                ],
+                Core3d,
+                (
+                    Node3d::Tonemapping,
+                    PostProcessLabel,
+                    Node3d::EndMainPassPostProcessing,
+                ),
             );
     }
 
@@ -77,11 +74,11 @@ impl Plugin for PostProcessPlugin {
     }
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
+struct PostProcessLabel;
+
 #[derive(Default)]
 struct PostProcessNode;
-impl PostProcessNode {
-    pub const NAME: &'static str = "post_process";
-}
 
 impl ViewNode for PostProcessNode {
     type ViewQuery = &'static ViewTarget;
@@ -127,6 +124,8 @@ impl ViewNode for PostProcessNode {
                 ops: Operations::default(),
             })],
             depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
         });
 
         render_pass.set_render_pipeline(pipeline);
@@ -148,9 +147,9 @@ impl FromWorld for PostProcessPipeline {
     fn from_world(world: &mut World) -> Self {
         let render_device = world.resource::<RenderDevice>();
 
-        let layout = render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            label: Some("post_process_bind_group_layout"),
-            entries: &[
+        let layout = render_device.create_bind_group_layout(
+            Some("post_process_bind_group_layout"),
+            &[
                 BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::FRAGMENT,
@@ -178,7 +177,7 @@ impl FromWorld for PostProcessPipeline {
                     count: None,
                 },
             ],
-        });
+        );
 
         let sampler = render_device.create_sampler(&SamplerDescriptor::default());
 
@@ -233,12 +232,12 @@ fn setup(
 ) {
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
-                .looking_at(Vec3::default(), Vec3::Y),
-            camera_3d: Camera3d {
+            camera: Camera {
                 clear_color: ClearColorConfig::Custom(Color::WHITE),
                 ..default()
             },
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
+                .looking_at(Vec3::default(), Vec3::Y),
             ..default()
         },
         PostProcessSettings {
@@ -249,8 +248,8 @@ fn setup(
 
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+            mesh: meshes.add(Cuboid::default()),
+            material: materials.add(Color::rgb(0.8, 0.7, 0.6)),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..default()
         },
